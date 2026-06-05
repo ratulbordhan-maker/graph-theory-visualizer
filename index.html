@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="GraphLab is an interactive graph theory visualizer for BFS, DFS, Dijkstra, and connected components." />
+  <meta name="theme-color" content="#0d0f14" />
+  <title>GraphLab — Graph Theory Visualizer</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet" />
+</head>
+<body class="dark">
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-left">
+      <div class="logo">
+        <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+          <circle cx="6" cy="6" r="4" fill="var(--accent)"/>
+          <circle cx="22" cy="6" r="4" fill="var(--accent2)"/>
+          <circle cx="6" cy="22" r="4" fill="var(--accent2)"/>
+          <circle cx="22" cy="22" r="4" fill="var(--accent)"/>
+          <circle cx="14" cy="14" r="3" fill="var(--fg)"/>
+          <line x1="6" y1="6" x2="22" y2="6" stroke="var(--accent)" stroke-width="1.5"/>
+          <line x1="6" y1="6" x2="14" y2="14" stroke="var(--fg)" stroke-width="1.5" opacity="0.5"/>
+          <line x1="22" y1="6" x2="14" y2="14" stroke="var(--fg)" stroke-width="1.5" opacity="0.5"/>
+          <line x1="6" y1="22" x2="14" y2="14" stroke="var(--fg)" stroke-width="1.5" opacity="0.5"/>
+          <line x1="22" y1="22" x2="14" y2="14" stroke="var(--fg)" stroke-width="1.5" opacity="0.5"/>
+          <line x1="6" y1="22" x2="22" y2="22" stroke="var(--accent2)" stroke-width="1.5"/>
+        </svg>
+        <span class="logo-text">Graph<span class="accent">Lab</span></span>
+      </div>
+      <div class="course-tags">
+        <span class="tag">CSE220</span>
+        <span class="tag">CSE221</span>
+        <span class="tag">CSE230</span>
+      </div>
+    </div>
+    <div class="header-right">
+      <label class="toggle-wrap" title="Toggle dark/light mode">
+        <input type="checkbox" id="themeToggle" checked />
+        <span class="toggle-track">
+          <span class="toggle-thumb"></span>
+          <span class="toggle-icon light-icon">☀️</span>
+          <span class="toggle-icon dark-icon">🌙</span>
+        </span>
+      </label>
+    </div>
+  </header>
+
+  <!-- Main Layout -->
+  <main class="layout">
+
+    <!-- LEFT PANEL: Controls -->
+    <aside class="panel left-panel">
+
+      <!-- Mode Controls -->
+      <section class="panel-section">
+        <h3 class="section-title">Graph Type</h3>
+        <div class="btn-group">
+          <button type="button" class="btn-mode active" data-mode="undirected" id="btnUndirected" aria-label="Switch to undirected graph">⟷ Undirected</button>
+          <button type="button" class="btn-mode" data-mode="directed" id="btnDirected" aria-label="Switch to directed graph">→ Directed</button>
+        </div>
+      </section>
+
+      <section class="panel-section">
+        <h3 class="section-title">Edit Mode</h3>
+        <div class="tool-grid">
+          <button type="button" class="tool-btn active" id="toolAddNode" title="Add Node">
+            <span class="tool-icon" aria-hidden="true">⊕</span>
+            <span>Add Node</span>
+          </button>
+          <button type="button" class="tool-btn" id="toolAddEdge" title="Add Edge">
+            <span class="tool-icon" aria-hidden="true">⟶</span>
+            <span>Add Edge</span>
+          </button>
+          <button type="button" class="tool-btn" id="toolDelete" title="Delete">
+            <span class="tool-icon" aria-hidden="true">✕</span>
+            <span>Delete</span>
+          </button>
+          <button type="button" class="tool-btn" id="toolMove" title="Move">
+            <span class="tool-icon" aria-hidden="true">✥</span>
+            <span>Move</span>
+          </button>
+        </div>
+        <div id="edgeWeightWrap" class="edge-weight-row hidden">
+          <label for="edgeWeight">Edge Weight:</label>
+          <input type="number" id="edgeWeight" value="1" min="1" max="99" />
+        </div>
+      </section>
+
+      <section class="panel-section">
+        <h3 class="section-title">Algorithms</h3>
+        <div class="algo-list">
+          <button type="button" class="algo-btn" id="algoBFS">
+            <span class="algo-badge bfs">BFS</span>
+            <div class="algo-info">
+              <span class="algo-name">Breadth-First Search</span>
+              <span class="algo-complexity">O(V+E)</span>
+            </div>
+          </button>
+          <button type="button" class="algo-btn" id="algoDFS">
+            <span class="algo-badge dfs">DFS</span>
+            <div class="algo-info">
+              <span class="algo-name">Depth-First Search</span>
+              <span class="algo-complexity">O(V+E)</span>
+            </div>
+          </button>
+          <button type="button" class="algo-btn" id="algoDijkstra">
+            <span class="algo-badge dijkstra">DIJ</span>
+            <div class="algo-info">
+              <span class="algo-name">Dijkstra's Shortest Path</span>
+              <span class="algo-complexity">O((V+E)logV)</span>
+            </div>
+          </button>
+          <button type="button" class="algo-btn" id="algoComponents">
+            <span class="algo-badge components">CC</span>
+            <div class="algo-info">
+              <span class="algo-name">Connected Components</span>
+              <span class="algo-complexity">O(V+E)</span>
+            </div>
+          </button>
+        </div>
+        <div class="algo-speed-row">
+          <label>Speed:</label>
+          <input type="range" id="speedSlider" min="100" max="1500" value="700" step="100" />
+          <span id="speedLabel">Normal</span>
+        </div>
+        <div class="algo-actions">
+          <button type="button" class="btn-run" id="btnRun" disabled>▶ Run</button>
+          <button type="button" class="btn-step" id="btnStep" disabled>⏭ Step</button>
+          <button type="button" class="btn-stop" id="btnStop" disabled>⏹ Stop</button>
+        </div>
+      </section>
+
+      <!-- Traversal Order Output -->
+      <section class="panel-section" id="traversalSection" style="display:none">
+        <h3 class="section-title">Traversal Order</h3>
+        <div class="traversal-display" id="traversalDisplay"></div>
+      </section>
+
+      <!-- Graph Actions -->
+      <section class="panel-section">
+        <h3 class="section-title">Graph Actions</h3>
+        <div class="action-grid">
+          <button type="button" class="action-btn" id="btnRandom">🎲 Random Graph</button>
+          <button type="button" class="action-btn" id="btnClear">🗑 Clear Graph</button>
+          <button type="button" class="action-btn" id="btnExport">⬇ Export JSON</button>
+          <button type="button" class="action-btn" id="btnImport">⬆ Import JSON</button>
+          <button type="button" class="action-btn" id="btnSave">💾 Save Locally</button>
+          <button type="button" class="action-btn" id="btnLoad">📂 Load Saved</button>
+        </div>
+        <input type="file" id="importFile" accept=".json" style="display:none" />
+      </section>
+
+    </aside>
+
+    <!-- CENTER: Canvas -->
+    <section class="canvas-wrap">
+      <div class="canvas-toolbar">
+        <span class="canvas-hint" id="canvasHint">Click on canvas to add nodes</span>
+        <div class="zoom-controls">
+          <button type="button" id="zoomIn" title="Zoom In" aria-label="Zoom in">+</button>
+          <span id="zoomLevel">100%</span>
+          <button type="button" id="zoomOut" title="Zoom Out" aria-label="Zoom out">−</button>
+          <button type="button" id="zoomReset" title="Reset Zoom" aria-label="Reset zoom">⟳</button>
+        </div>
+      </div>
+      <div class="canvas-container" id="canvasContainer">
+        <canvas id="graphCanvas" aria-label="Graph editing canvas" role="img"></canvas>
+      </div>
+      <div class="canvas-legend">
+        <span class="legend-item"><span class="dot default"></span>Default</span>
+        <span class="legend-item"><span class="dot visited"></span>Visited</span>
+        <span class="legend-item"><span class="dot current"></span>Current</span>
+        <span class="legend-item"><span class="dot path"></span>Path</span>
+        <span class="legend-item"><span class="dot source"></span>Source</span>
+      </div>
+    </section>
+
+    <!-- RIGHT PANEL: Info & Education -->
+    <aside class="panel right-panel">
+
+      <!-- Graph Stats -->
+      <section class="panel-section">
+        <h3 class="section-title">Graph Info</h3>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <span class="stat-val" id="statVertices">0</span>
+            <span class="stat-label">Vertices</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-val" id="statEdges">0</span>
+            <span class="stat-label">Edges</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-val" id="statDensity">0.00</span>
+            <span class="stat-label">Density</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-val" id="statComponents">—</span>
+            <span class="stat-label">Components</span>
+          </div>
+        </div>
+        <div class="node-info" id="nodeInfo" style="display:none">
+          <div class="node-info-row"><span>Selected Node:</span><strong id="nodeInfoLabel">—</strong></div>
+          <div class="node-info-row"><span>Degree:</span><strong id="nodeInfoDegree">—</strong></div>
+          <div class="node-info-row" id="nodeInfoInDegreeRow" style="display:none"><span>In-degree:</span><strong id="nodeInfoInDegree">—</strong></div>
+          <div class="node-info-row" id="nodeInfoOutDegreeRow" style="display:none"><span>Out-degree:</span><strong id="nodeInfoOutDegree">—</strong></div>
+        </div>
+      </section>
+
+      <!-- Path Result -->
+      <section class="panel-section" id="pathResultSection" style="display:none">
+        <h3 class="section-title">Shortest Path Result</h3>
+        <div class="path-result" id="pathResult"></div>
+      </section>
+
+      <!-- Algorithm Education -->
+      <section class="panel-section">
+        <h3 class="section-title">Algorithm Guide</h3>
+        <div class="edu-tabs">
+          <button type="button" class="edu-tab active" data-edu="bfs">BFS</button>
+          <button type="button" class="edu-tab" data-edu="dfs">DFS</button>
+          <button type="button" class="edu-tab" data-edu="dijkstra">Dijkstra</button>
+          <button type="button" class="edu-tab" data-edu="components">Components</button>
+        </div>
+        <div class="edu-content" id="eduContent"></div>
+      </section>
+
+      <!-- Adjacency Matrix -->
+      <section class="panel-section">
+        <h3 class="section-title">Adjacency Matrix</h3>
+        <div class="matrix-wrap" id="matrixWrap">
+          <p class="empty-msg">Add nodes to see matrix</p>
+        </div>
+      </section>
+
+    </aside>
+  </main>
+
+  <!-- Status Bar -->
+  <footer class="status-bar">
+    <span id="statusMsg" role="status" aria-live="polite">Ready — Select a tool and start building your graph</span>
+    <span class="status-right">GraphLab v1.0 · Graph Theory Visualizer</span>
+  </footer>
+
+  <!-- Toast -->
+  <div class="toast" id="toast" role="alert" aria-live="assertive"></div>
+
+  <script src="script.js"></script>
+</body>
+</html>
