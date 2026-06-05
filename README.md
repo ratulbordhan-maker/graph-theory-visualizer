@@ -72,3 +72,4 @@ GraphLab is designed for a clean, professional learning experience. Key interfac
 ## Deployment
 
 This project is configured to deploy as a static site on GitHub Pages. The repository includes workflow metadata for automated deployment from the `main` branch.
+
