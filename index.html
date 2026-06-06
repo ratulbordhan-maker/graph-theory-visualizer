@@ -9,6 +9,252 @@
   <link rel="stylesheet" href="style.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    /* ── Collapsible Panel Titles ── */
+    .collapsible-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      user-select: none;
+      padding: 0;
+    }
+    .collapsible-title:hover { opacity: 0.8; }
+    .collapse-icon {
+      font-size: 14px;
+      color: var(--accent);
+      transition: transform 0.2s;
+      flex-shrink: 0;
+    }
+    .collapsible-body {
+      overflow: hidden;
+      transition: max-height 0.28s ease, opacity 0.22s ease;
+      max-height: 600px;
+      opacity: 1;
+    }
+    .collapsible-body.collapsed {
+      max-height: 0 !important;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    /* ── Pseudocode Panel ── */
+    .pseudocode-wrap {
+      margin-top: 6px;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid var(--border, rgba(255,255,255,0.08));
+      max-height: 320px;
+      overflow-y: auto;
+      overflow-x: auto;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border, rgba(255,255,255,0.08)) transparent;
+    }
+    .pseudocode-wrap::-webkit-scrollbar { width: 4px; }
+    .pseudocode-wrap::-webkit-scrollbar-thumb { background: var(--border, rgba(255,255,255,0.15)); border-radius: 2px; }
+    .pc-block {
+      display: flex;
+      flex-direction: column;
+      background: var(--panel-bg, rgba(13,15,20,0.6));
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+    }
+    .pc-line {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding-top: 3px;
+      padding-bottom: 3px;
+      padding-right: 10px;
+      transition: background 0.18s, color 0.18s;
+      border-left: 3px solid transparent;
+    }
+    .pc-line.pc-active {
+      background: rgba(124, 110, 255, 0.18);
+      border-left-color: var(--accent, #7c6eff);
+    }
+    .pc-line-num {
+      font-size: 10px;
+      min-width: 18px;
+      text-align: right;
+      opacity: 0.35;
+      flex-shrink: 0;
+    }
+    .pc-line.pc-active .pc-line-num {
+      opacity: 0.7;
+      color: var(--accent, #7c6eff);
+    }
+    .pc-line-text {
+      white-space: pre;
+      color: var(--fg, #e4e8f5);
+      opacity: 0.75;
+      line-height: 1.6;
+      flex: 1;
+    }
+    /* Syntax coloring tokens */
+    .pc-kw    { color: #ff6b6b; }
+    .pc-loop  { color: #ffc947; }
+    .pc-cond  { color: #00bfff; }
+    .pc-fn    { color: #7c6eff; font-weight: 700; }
+    .pc-op    { color: #00e5a0; }
+    .pc-num   { color: #ff9f43; }
+    .pc-str   { color: #a8e6cf; }
+    .pc-method{ color: #54a0ff; }
+    .pc-comment { color: #5a6180; font-style: italic; }
+    body.light .pc-kw    { color: #cc2222; }
+    body.light .pc-loop  { color: #8a5c00; }
+    body.light .pc-cond  { color: #0060aa; }
+    body.light .pc-fn    { color: #5040cc; }
+    body.light .pc-op    { color: #008800; }
+    body.light .pc-num   { color: #cc6600; }
+    body.light .pc-str   { color: #226622; }
+    body.light .pc-method{ color: #224488; }
+    body.light .pc-comment{ color: #8890aa; }
+    .pc-line.pc-active .pc-line-text {
+      opacity: 1;
+      color: #c8bfff;
+    }
+
+    /* ── Learning Mode Panel ── */
+    .learning-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 6px;
+    }
+    .lm-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .lm-row.col {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    .lm-label {
+      font-size: 11px;
+      opacity: 0.6;
+      font-family: 'JetBrains Mono', monospace;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .lm-val {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .step-badge {
+      background: rgba(255, 201, 71, 0.12);
+      color: #ffc947;
+      border-radius: 5px;
+      padding: 2px 8px;
+      border: 1px solid rgba(255,201,71,0.25);
+    }
+    .node-badge {
+      background: rgba(0, 229, 160, 0.12);
+      color: #00e5a0;
+      border-radius: 5px;
+      padding: 2px 8px;
+      border: 1px solid rgba(0,229,160,0.25);
+    }
+    .comp-badge {
+      background: rgba(124, 110, 255, 0.14);
+      color: #7c6eff;
+      border-radius: 5px;
+      padding: 2px 8px;
+      border: 1px solid rgba(124,110,255,0.28);
+    }
+    .lm-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin-top: 4px;
+    }
+    .lm-chip {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 700;
+      border-radius: 4px;
+      padding: 2px 7px;
+      border: 1px solid transparent;
+    }
+    .lm-chip.bfs {
+      background: rgba(0,191,255,0.13);
+      color: #00bfff;
+      border-color: rgba(0,191,255,0.28);
+    }
+    .lm-chip.dfs {
+      background: rgba(255,107,107,0.12);
+      color: #ff6b6b;
+      border-color: rgba(255,107,107,0.25);
+    }
+    .lm-chip.dfs.top {
+      background: rgba(255,107,107,0.25);
+      border-color: #ff6b6b;
+    }
+    .lm-empty {
+      font-size: 11px;
+      opacity: 0.4;
+      font-style: italic;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    /* Distance table */
+    .lm-dist-table-wrap {
+      width: 100%;
+      overflow-x: auto;
+      margin-top: 4px;
+      border-radius: 6px;
+      border: 1px solid var(--border, rgba(255,255,255,0.08));
+    }
+    .lm-dist-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+    }
+    .lm-dist-table th {
+      padding: 4px 8px;
+      text-align: left;
+      opacity: 0.5;
+      font-weight: 600;
+      font-size: 10px;
+      text-transform: uppercase;
+      border-bottom: 1px solid var(--border, rgba(255,255,255,0.08));
+      background: rgba(255,255,255,0.03);
+    }
+    .lm-dist-table td {
+      padding: 3px 8px;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      color: var(--fg, #e4e8f5);
+      opacity: 0.75;
+    }
+    .lm-dist-table tr:last-child td { border-bottom: none; }
+    .lm-dist-table tr.lm-dist-current td {
+      background: rgba(124,110,255,0.12);
+      color: #c8bfff;
+      opacity: 1;
+      font-weight: 700;
+    }
+
+    /* Light theme overrides */
+    body.light .pc-block {
+      background: rgba(240,242,250,0.8);
+    }
+    body.light .pc-line-text { color: #1a1e2a; }
+    body.light .pc-line.pc-active { background: rgba(96,80,204,0.10); border-left-color: #6050cc; }
+    body.light .pc-line.pc-active .pc-line-text { color: #3d2fa8; }
+    body.light .lm-dist-table th { background: rgba(0,0,0,0.03); }
+    body.light .lm-dist-table td { color: #1a1e2a; }
+    body.light .step-badge { background: rgba(180,120,0,0.1); color: #9a6800; border-color: rgba(180,120,0,0.25); }
+    body.light .node-badge { background: rgba(0,140,80,0.1); color: #007a44; border-color: rgba(0,140,80,0.25); }
+    body.light .comp-badge { background: rgba(80,60,180,0.1); color: #4030aa; border-color: rgba(80,60,180,0.25); }
+    body.light .lm-chip.bfs { background: rgba(0,130,200,0.1); color: #0070aa; border-color: rgba(0,130,200,0.25); }
+    body.light .lm-chip.dfs { background: rgba(200,60,60,0.1); color: #aa2222; border-color: rgba(200,60,60,0.25); }
+    body.light .lm-chip.dfs.top { background: rgba(200,60,60,0.2); }
+    body.light .lm-dist-table tr.lm-dist-current td { background: rgba(80,60,180,0.1); color: #3d2fa8; }
+  </style>
 </head>
 <body class="dark">
 
@@ -122,6 +368,57 @@
             </div>
           </button>
         </div>
+
+        <h3 class="section-title advanced-section-title" style="margin-top:14px;margin-bottom:6px;font-size:0.7rem;letter-spacing:0.08em;opacity:0.7;text-transform:uppercase;">Advanced Algorithms</h3>
+        <div class="algo-list">
+          <button type="button" class="algo-btn" id="algoPrim">
+            <span class="algo-badge prim">PRM</span>
+            <div class="algo-info">
+              <span class="algo-name">Prim's MST</span>
+              <span class="algo-complexity">O(E log V)</span>
+            </div>
+          </button>
+          <button type="button" class="algo-btn" id="algoKruskal">
+            <span class="algo-badge kruskal">KRK</span>
+            <div class="algo-info">
+              <span class="algo-name">Kruskal's MST</span>
+              <span class="algo-complexity">O(E log E)</span>
+            </div>
+          </button>
+          <button type="button" class="algo-btn" id="algoColoring">
+            <span class="algo-badge coloring">COL</span>
+            <div class="algo-info">
+              <span class="algo-name">Graph Coloring</span>
+              <span class="algo-complexity">O(V+E)</span>
+            </div>
+          </button>
+          <button type="button" class="algo-btn" id="algoAstar">
+            <span class="algo-badge astar">A*</span>
+            <div class="algo-info">
+              <span class="algo-name">A* Pathfinding</span>
+              <span class="algo-complexity">O(E log V)</span>
+            </div>
+          </button>
+        </div>
+
+        <h3 class="section-title advanced-section-title" style="margin-top:14px;margin-bottom:6px;font-size:0.7rem;letter-spacing:0.08em;opacity:0.7;text-transform:uppercase;">Version 1.2 Algorithms</h3>
+        <div class="algo-list">
+          <button type="button" class="algo-btn" id="algoBellmanFord">
+            <span class="algo-badge bellmanford">BF</span>
+            <div class="algo-info">
+              <span class="algo-name">Bellman-Ford SSSP</span>
+              <span class="algo-complexity">O(V·E)</span>
+            </div>
+          </button>
+          <button type="button" class="algo-btn" id="algoTopoSort">
+            <span class="algo-badge toposort">TS</span>
+            <div class="algo-info">
+              <span class="algo-name">Topological Sort</span>
+              <span class="algo-complexity">O(V+E)</span>
+            </div>
+          </button>
+        </div>
+
         <div class="algo-speed-row">
           <label>Speed:</label>
           <input type="range" id="speedSlider" min="100" max="1500" value="700" step="100" />
@@ -143,6 +440,22 @@
       <!-- Graph Actions -->
       <section class="panel-section">
         <h3 class="section-title">Graph Actions</h3>
+        <div class="undo-redo-row">
+          <button type="button" class="action-btn undo-btn" id="btnUndo" disabled title="Undo (Ctrl+Z)">↩ Undo</button>
+          <button type="button" class="action-btn redo-btn" id="btnRedo" disabled title="Redo (Ctrl+Y)">↪ Redo</button>
+        </div>
+        <div class="preset-row">
+          <select id="presetSelect" class="preset-select">
+            <option value="">📦 Load Example Graph…</option>
+            <option value="binaryTree">🌳 Binary Tree</option>
+            <option value="completeK5">⬠ Complete Graph K5</option>
+            <option value="completeK4">◆ Complete Graph K4</option>
+            <option value="grid">⊞ Grid Graph (3×3)</option>
+            <option value="roadNetwork">🛣 Weighted Road Network</option>
+            <option value="dag">➡ DAG Example</option>
+            <option value="petersen">⬡ Petersen Graph</option>
+          </select>
+        </div>
         <div class="action-grid">
           <button type="button" class="action-btn" id="btnRandom">🎲 Random Graph</button>
           <button type="button" class="action-btn" id="btnClear">🗑 Clear Graph</button>
@@ -150,6 +463,7 @@
           <button type="button" class="action-btn" id="btnImport">⬆ Import JSON</button>
           <button type="button" class="action-btn" id="btnSave">💾 Save Locally</button>
           <button type="button" class="action-btn" id="btnLoad">📂 Load Saved</button>
+          <button type="button" class="action-btn" id="btnExportPNG" style="grid-column:1/-1">🖼 Export PNG</button>
         </div>
         <input type="file" id="importFile" accept=".json" style="display:none" />
       </section>
@@ -176,6 +490,62 @@
         <span class="legend-item"><span class="dot current"></span>Current</span>
         <span class="legend-item"><span class="dot path"></span>Path</span>
         <span class="legend-item"><span class="dot source"></span>Source</span>
+        <span style="margin-left:auto">
+          <button type="button" id="focusDrawerBtn" class="focus-drawer-toggle-btn" title="Open focus view for pseudocode & explanations">
+            ▲ Focus View
+          </button>
+        </span>
+      </div>
+
+      <!-- FOCUS DRAWER — slides up from bottom of canvas -->
+      <div class="focus-drawer" id="focusDrawer" aria-hidden="true">
+        <div class="focus-drawer-resize" id="focusDrawerResize"></div>
+        <div class="focus-drawer-header">
+          <div class="focus-drawer-tabs">
+            <button type="button" class="fd-tab active" data-fdtab="pseudocode">⌨ Pseudocode</button>
+            <button type="button" class="fd-tab" data-fdtab="explain">📖 Explanation</button>
+            <button type="button" class="fd-tab" data-fdtab="learning">🧠 Step Trace</button>
+            <button type="button" class="fd-tab" data-fdtab="history">📋 Exec Log</button>
+          </div>
+          <div class="fd-algo-pill" id="fdAlgoBadge">No algorithm selected</div>
+          <button type="button" class="fd-close-btn" id="focusDrawerClose" title="Close focus view">✕</button>
+        </div>
+        <div class="focus-drawer-body">
+          <div class="fd-tab-content active" id="fd-pseudocode">
+            <div class="fd-pseudocode-outer">
+              <div class="fd-pseudocode-wrap" id="fdPseudocodeWrap">
+                <p class="fd-empty">Select an algorithm to view its pseudocode</p>
+              </div>
+              <div class="fd-pc-legend">
+                <span><span class="fd-legend-dot" style="background:#ff6b6b"></span>keyword</span>
+                <span><span class="fd-legend-dot" style="background:#ffc947"></span>loop</span>
+                <span><span class="fd-legend-dot" style="background:#00bfff"></span>condition</span>
+                <span><span class="fd-legend-dot" style="background:#7c6eff"></span>function</span>
+                <span><span class="fd-legend-dot" style="background:#00e5a0"></span>operator</span>
+                <span><span class="fd-legend-dot" style="background:#54a0ff"></span>method</span>
+              </div>
+            </div>
+          </div>
+          <div class="fd-tab-content" id="fd-explain">
+            <div class="fd-explain-wrap" id="fdExplainWrap">
+              <p class="fd-empty">Select an algorithm to view its explanation</p>
+            </div>
+          </div>
+          <div class="fd-tab-content" id="fd-learning">
+            <div class="fd-learning-wrap" id="fdLearningWrap">
+              <p class="fd-empty">Run an algorithm to see the live step trace</p>
+            </div>
+          </div>
+          <div class="fd-tab-content" id="fd-history">
+            <div class="fd-history-wrap" id="fdHistoryWrap">
+              <p class="fd-empty">Run an algorithm to see the execution log</p>
+            </div>
+            <div class="fd-history-actions">
+              <button type="button" class="fd-history-clear" id="fdHistoryClear">🗑 Clear</button>
+              <button type="button" class="fd-history-export" id="fdHistoryExport">⬇ Export</button>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -217,16 +587,164 @@
         <div class="path-result" id="pathResult"></div>
       </section>
 
-      <!-- Algorithm Education -->
-      <section class="panel-section">
-        <h3 class="section-title">Algorithm Guide</h3>
-        <div class="edu-tabs">
-          <button type="button" class="edu-tab active" data-edu="bfs">BFS</button>
-          <button type="button" class="edu-tab" data-edu="dfs">DFS</button>
-          <button type="button" class="edu-tab" data-edu="dijkstra">Dijkstra</button>
-          <button type="button" class="edu-tab" data-edu="components">Components</button>
+      <!-- MST Result -->
+      <section class="panel-section" id="mstResultSection" style="display:none">
+        <h3 class="section-title">MST Result</h3>
+        <div class="path-result" id="mstResult"></div>
+      </section>
+
+      <!-- Coloring Result -->
+      <section class="panel-section" id="coloringResultSection" style="display:none">
+        <h3 class="section-title">Coloring Result</h3>
+        <div class="path-result" id="coloringResult"></div>
+      </section>
+
+      <!-- A* Result -->
+      <section class="panel-section" id="astarResultSection" style="display:none">
+        <h3 class="section-title">A* Result</h3>
+        <div class="path-result" id="astarResult"></div>
+      </section>
+
+      <!-- Comparison Result (now inside tab) -->
+
+      <!-- Algorithm Explanation Panel (🥇 Priority 1) -->
+      <section class="panel-section algo-explain-section" id="algoExplainSection" style="display:none">
+        <h3 class="section-title collapsible-title" id="algoExplainToggleBtn" aria-expanded="true" aria-controls="algoExplainBody" tabindex="0" role="button">
+          <span class="explain-title-inner">
+            <span class="explain-algo-badge" id="explainBadge">—</span>
+            <span id="explainAlgoName">Algorithm</span>
+          </span>
+          <span class="collapse-icon" id="algoExplainCollapseIcon">▾</span>
+        </h3>
+        <div class="collapsible-body" id="algoExplainBody">
+          <div class="algo-explain-body" id="algoExplainBody2">
+            <!-- Dynamically populated -->
+          </div>
         </div>
-        <div class="edu-content" id="eduContent"></div>
+      </section>
+
+      <!-- Algorithm History Log (🥈 Priority 2) -->
+      <section class="panel-section" id="historyLogSection" style="display:none">
+        <h3 class="section-title collapsible-title" id="historyToggleBtn" aria-expanded="true" aria-controls="historyLogBody" tabindex="0" role="button">
+          <span>Execution Log</span>
+          <span style="display:flex;align-items:center;gap:6px">
+            <span class="history-count-badge" id="historyCountBadge">0</span>
+            <span class="collapse-icon" id="historyCollapseIcon">▾</span>
+          </span>
+        </h3>
+        <div class="collapsible-body" id="historyLogBody">
+          <div class="history-log-wrap" id="historyLogWrap">
+            <p class="empty-msg">Run an algorithm to see step-by-step log</p>
+          </div>
+          <div class="history-log-footer">
+            <button type="button" class="history-clear-btn" id="historyClearBtn">🗑 Clear Log</button>
+            <button type="button" class="history-export-btn" id="historyExportBtn">⬇ Export</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Pseudocode Panel -->
+      <section class="panel-section" id="pseudocodeSection">
+        <h3 class="section-title collapsible-title" id="pseudocodeToggleBtn" aria-expanded="true" aria-controls="pseudocodeBody" tabindex="0" role="button">
+          <span>Pseudocode</span>
+          <span class="collapse-icon" id="pseudocodeCollapseIcon">▾</span>
+        </h3>
+        <div class="collapsible-body" id="pseudocodeBody">
+          <div class="pseudocode-wrap" id="pseudocodeWrap">
+            <p class="empty-msg">Select an algorithm to view pseudocode</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Learning Mode Panel -->
+      <section class="panel-section" id="learningModeSection" style="display:none">
+        <h3 class="section-title collapsible-title" id="learningToggleBtn" aria-expanded="true" aria-controls="learningModeBody" tabindex="0" role="button">
+          <span>Learning Mode</span>
+          <span class="collapse-icon" id="learningCollapseIcon">▾</span>
+        </h3>
+        <div class="collapsible-body" id="learningModeBody">
+          <div class="learning-grid" id="learningGrid">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+      </section>
+
+      <!-- Algorithm Education + Interview Prep + Challenge — Tabbed -->
+      <section class="panel-section edu-section-tabbed">
+        <div class="right-panel-tabs">
+          <button type="button" class="rp-tab active" data-rptab="guide">📚 Guide</button>
+          <button type="button" class="rp-tab" data-rptab="interview">💼 Interview</button>
+          <button type="button" class="rp-tab" data-rptab="challenge">🎯 Challenge</button>
+          <button type="button" class="rp-tab" data-rptab="compare">⚡ Compare</button>
+        </div>
+
+        <!-- Guide Tab -->
+        <div class="rp-tab-content active" id="rptab-guide">
+          <div class="edu-tabs">
+            <button type="button" class="edu-tab active" data-edu="bfs">BFS</button>
+            <button type="button" class="edu-tab" data-edu="dfs">DFS</button>
+            <button type="button" class="edu-tab" data-edu="dijkstra">DIJ</button>
+            <button type="button" class="edu-tab" data-edu="components">CC</button>
+            <button type="button" class="edu-tab" data-edu="prim">PRM</button>
+            <button type="button" class="edu-tab" data-edu="kruskal">KRK</button>
+            <button type="button" class="edu-tab" data-edu="coloring">COL</button>
+            <button type="button" class="edu-tab" data-edu="astar">A*</button>
+            <button type="button" class="edu-tab" data-edu="bellmanford">BF</button>
+            <button type="button" class="edu-tab" data-edu="toposort">TS</button>
+          </div>
+          <div class="edu-content" id="eduContent"></div>
+        </div>
+
+        <!-- Interview Prep Tab (🥉 Priority 3) -->
+        <div class="rp-tab-content" id="rptab-interview">
+          <div class="interview-panel" id="interviewPanel">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+
+        <!-- Challenge Mode Tab (🏅 Priority 4) -->
+        <div class="rp-tab-content" id="rptab-challenge">
+          <div class="challenge-panel" id="challengePanel">
+            <div class="challenge-header">
+              <div class="challenge-score-wrap">
+                <div class="challenge-score-label">Score</div>
+                <div class="challenge-score" id="challengeScore">0</div>
+              </div>
+              <div class="challenge-streak-wrap">
+                <div class="challenge-score-label">Streak 🔥</div>
+                <div class="challenge-score challenge-streak" id="challengeStreak">0</div>
+              </div>
+              <div class="challenge-diff-wrap">
+                <div class="challenge-score-label">Difficulty</div>
+                <div class="challenge-diff-btns">
+                  <button type="button" class="diff-btn active" data-diff="easy">Easy</button>
+                  <button type="button" class="diff-btn" data-diff="medium">Med</button>
+                  <button type="button" class="diff-btn" data-diff="hard">Hard</button>
+                </div>
+              </div>
+            </div>
+            <div class="challenge-question-card" id="challengeCard">
+              <div class="challenge-algo-label" id="challengeAlgoLabel">Select an algorithm to practice</div>
+              <div class="challenge-question" id="challengeQuestion">Run an algorithm first, then tap "New Challenge" to test your understanding.</div>
+              <div class="challenge-options" id="challengeOptions"></div>
+              <div class="challenge-feedback" id="challengeFeedback" style="display:none"></div>
+            </div>
+            <div class="challenge-actions">
+              <button type="button" class="challenge-btn-new" id="challengeNewBtn">🎲 New Challenge</button>
+              <button type="button" class="challenge-btn-reveal" id="challengeRevealBtn" style="display:none">💡 Reveal Answer</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Compare Tab -->
+        <div class="rp-tab-content" id="rptab-compare">
+          <div class="compare-btns">
+            <button type="button" class="compare-btn" id="cmpBFSDFS">⚡ BFS vs DFS</button>
+            <button type="button" class="compare-btn" id="cmpDijkstraAstar">🔺 Dijkstra vs A*</button>
+            <button type="button" class="compare-btn" id="cmpPrimKruskal">🌲 Prim vs Kruskal</button>
+          </div>
+          <div id="compareResult" class="compare-result-wrap"></div>
+        </div>
       </section>
 
       <!-- Adjacency Matrix -->
@@ -243,7 +761,7 @@
   <!-- Status Bar -->
   <footer class="status-bar">
     <span id="statusMsg" role="status" aria-live="polite">Ready — Select a tool and start building your graph</span>
-    <span class="status-right">GraphLab v1.0 · Graph Theory Visualizer</span>
+    <span class="status-right">GraphLab v1.2 · Graph Theory Visualizer</span>
   </footer>
 
   <!-- Toast -->
